@@ -42,6 +42,7 @@ public final class RemoteFeedLoader: FeedLoader {
 
 	private let url: URL
 	private let client: HTTPClient
+	private let validStatus = 200
 
 	public init(url: URL, client: HTTPClient) {
 		self.url = url
@@ -49,19 +50,23 @@ public final class RemoteFeedLoader: FeedLoader {
 	}
 
 	public func load(completion: @escaping (FeedLoader.Result) -> Void) {
-		self.client.get(from: url, completion: { result in
+		self.client.get(from: url, completion: { [weak self] result in
+			guard let self = self else { return }
 			switch result {
-			case .failure(_):
+			case .failure:
 				completion(.failure(Error.connectivity))
 			case let .success((data, response)):
-				if response.statusCode != 200 {
-					completion(.failure(Error.invalidData))
-				} else if let remoteData = try? JSONDecoder().decode(FeedImageRemoteList.self, from: data) {
-					completion(.success(remoteData.feedImageList))
-				} else {
-					completion(.failure(Error.invalidData))
-				}
+				completion(self.handleSuccessCase(with: data, response: response))
 			}
 		})
+	}
+
+	private func handleSuccessCase(with data: Data, response: HTTPURLResponse) -> FeedLoader.Result {
+		guard response.statusCode == validStatus,
+		      let remoteData = try? JSONDecoder().decode(FeedImageRemoteList.self, from: data)
+		else {
+			return .failure(Error.invalidData)
+		}
+		return .success(remoteData.feedImageList)
 	}
 }
