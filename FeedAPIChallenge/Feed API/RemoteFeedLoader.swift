@@ -5,15 +5,35 @@
 import Foundation
 
 public final class RemoteFeedLoader: FeedLoader {
-	private let url: URL
-	private let client: HTTPClient
+	// MARK:- Definition
 
 	public enum Error: Swift.Error {
 		case connectivity
 		case invalidData
 	}
 
-	struct FeedImageRemoteList: Decodable {}
+	struct FeedImageRemoteList: Decodable {
+		let items: [FeedImageRemoteItem]
+	}
+
+	struct FeedImageRemoteItem: Decodable {
+		let imageId: String
+		let imageDesciption: String
+		let imageLocation: String
+		let imageUrl: URL
+
+		enum CodingKeys: String, CodingKey {
+			case imageId = "image_id"
+			case imageDesciption = "image_desc"
+			case imageLocation = "image_loc"
+			case imageUrl = "image_url"
+		}
+	}
+
+	//MARK:- RemoteFeedLoader
+
+	private let url: URL
+	private let client: HTTPClient
 
 	public init(url: URL, client: HTTPClient) {
 		self.url = url
