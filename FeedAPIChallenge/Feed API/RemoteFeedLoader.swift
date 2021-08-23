@@ -14,12 +14,16 @@ public final class RemoteFeedLoader: FeedLoader {
 
 	struct FeedImageRemoteList: Decodable {
 		let items: [FeedImageRemoteItem]
+
+		var feedImageList: [FeedImage] {
+			items.map { $0.feedImage }
+		}
 	}
 
 	struct FeedImageRemoteItem: Decodable {
-		let imageId: String
-		let imageDesciption: String
-		let imageLocation: String
+		let imageId: UUID
+		let imageDesciption: String?
+		let imageLocation: String?
 		let imageUrl: URL
 
 		enum CodingKeys: String, CodingKey {
@@ -27,6 +31,10 @@ public final class RemoteFeedLoader: FeedLoader {
 			case imageDesciption = "image_desc"
 			case imageLocation = "image_loc"
 			case imageUrl = "image_url"
+		}
+
+		var feedImage: FeedImage {
+			.init(id: imageId, description: imageDesciption, location: imageLocation, url: imageUrl)
 		}
 	}
 
@@ -48,8 +56,8 @@ public final class RemoteFeedLoader: FeedLoader {
 			case let .success((data, response)):
 				if response.statusCode != 200 {
 					completion(.failure(Error.invalidData))
-				} else if let _ = try? JSONDecoder().decode(FeedImageRemoteList.self, from: data) {
-					completion(.success([]))
+				} else if let remoteData = try? JSONDecoder().decode(FeedImageRemoteList.self, from: data) {
+					completion(.success(remoteData.feedImageList))
 				} else {
 					completion(.failure(Error.invalidData))
 				}
