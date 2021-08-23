@@ -13,6 +13,8 @@ public final class RemoteFeedLoader: FeedLoader {
 		case invalidData
 	}
 
+	struct FeedImageRemoteList: Decodable {}
+
 	public init(url: URL, client: HTTPClient) {
 		self.url = url
 		self.client = client
@@ -23,11 +25,13 @@ public final class RemoteFeedLoader: FeedLoader {
 			switch result {
 			case .failure(_):
 				completion(.failure(Error.connectivity))
-			case let .success((_, code)):
-				if code.statusCode != 200 {
+			case let .success((data, response)):
+				if response.statusCode != 200 {
 					completion(.failure(Error.invalidData))
-				} else {
+				} else if let _ = try? JSONDecoder().decode(FeedImageRemoteList.self, from: data) {
 					completion(.success([]))
+				} else {
+					completion(.failure(Error.invalidData))
 				}
 			}
 		})
