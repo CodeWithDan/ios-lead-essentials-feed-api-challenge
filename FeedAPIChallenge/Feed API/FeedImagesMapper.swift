@@ -33,7 +33,7 @@ enum FeedImagesMapper {
 		}
 	}
 
-	static func handleSuccessCase(with data: Data, from response: HTTPURLResponse) -> FeedLoader.Result {
+	static func map(_ data: Data, from response: HTTPURLResponse) -> FeedLoader.Result {
 		guard response.statusCode == validStatus,
 		      let remoteData = try? JSONDecoder().decode(FeedImageRemoteList.self, from: data)
 		else {
